@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV builder · live preview + PDF/DOCX</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+  <!-- html2pdf for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- docx library -->
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: #f4f6fa;
+      padding: 2rem 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .app-container {
+      max-width: 1400px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* ---------- FORM PANEL ---------- */
+    .form-panel {
+      background: white;
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 20px 35px -8px rgba(0,0,0,0.1);
+      border: 1px solid #e9eef3;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .form-panel h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #0b1c2e;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .form-panel h2 i {
+      color: #1e7ae6;
+      font-size: 1.5rem;
+    }
+    .subhead {
+      color: #5a6d7e;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      border-left: 3px solid #1e7ae6;
+      padding-left: 0.75rem;
+      font-weight: 400;
+    }
+    .form-section {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px dashed #dbe2e9;
+      padding-bottom: 1rem;
+    }
+    .form-section:last-child {
+      border-bottom: none;
+    }
+    .form-section-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #1e7ae6;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+    }
+    .input-group label {
+      font-weight: 500;
+      font-size: 0.8rem;
+      color: #1f2e3c;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .input-group label i {
+      color: #1e7ae6;
+      font-size: 0.8rem;
+      width: 16px;
+    }
+    .input-group input,
+    .input-group textarea {
+      padding: 0.65rem 1rem;
+      border: 1.5px solid #dbe2e9;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      transition: 0.15s;
+      background: #ffffff;
+      resize: vertical;
+      width: 100%;
+    }
+    .input-group input:focus,
+    .input-group textarea:focus {
+      border-color: #1e7ae6;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(30, 122, 230, 0.1);
+    }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .contact-item,
+    .exp-item,
+    .edu-item {
+      background: #f9fcff;
+      border: 1px solid #e7eef6;
+      border-radius: 16px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+    .contact-item .remove-btn,
+    .exp-item .remove-btn,
+    .edu-item .remove-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #a0b3c6;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.15s;
+    }
+    .contact-item .remove-btn:hover,
+    .exp-item .remove-btn:hover,
+    .edu-item .remove-btn:hover {
+      color: #e74c3c;
+    }
+    .add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      border: 1.5px dashed #b0c7dd;
+      background: #f9fcff;
+      color: #1e7ae6;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .add-btn:hover {
+      background: #e8f2fe;
+      border-color: #1e7ae6;
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+      justify-content: flex-start;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      transition: 0.18s ease;
+      background: white;
+      border: 1.5px solid #d0dbe8;
+      color: #1f2e3c;
+    }
+    .btn i {
+      font-size: 1rem;
+    }
+    .btn-primary {
+      background: #0b1c2e;
+      border: 1.5px solid #0b1c2e;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #1e7ae6;
+      border-color: #1e7ae6;
+    }
+    .btn-outline:hover {
+      background: #f0f6fe;
+      border-color: #1e7ae6;
+      color: #0b1c2e;
+    }
+
+    /* ---------- PREVIEW PANEL ---------- */
+    .preview-panel {
+      background: transparent;
+      border-radius: 24px;
+      position: sticky;
+      top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 0.5rem;
+    }
+    .preview-header h3 {
+      font-weight: 500;
+      color: #5a6d7e;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge {
+      background: #e2eaf3;
+      color: #1e4a76;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      padding: 0.3rem 1rem;
+      font-weight: 500;
+    }
+    .cv-paper {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      border: 1px solid #e2e8f0;
+      line-height: 1.5;
+      color: #1e2a36;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    /* CV inner styles */
+    .cv-name {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0b1c2e;
+      line-height: 1.2;
+      margin-bottom: 0.25rem;
+    }
+    .cv-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #1e7ae6;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.2px;
+      border-bottom: 2px solid #e5effa;
+      padding-bottom: 0.7rem;
+    }
+    .cv-contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: #3f5568;
+      margin-bottom: 1.5rem;
+      background: #f9fcff;
+      padding: 0.7rem 1rem;
+      border-radius: 16px;
+      border: 1px solid #e7eef6;
+    }
+    .cv-contact span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .cv-contact i {
+      color: #1e7ae6;
+      width: 16px;
+      font-size: 0.9rem;
+    }
+    .cv-section {
+      margin-top: 1.5rem;
+    }
+    .cv-section-title {
+      font-weight: 600;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0b1c2e;
+      border-bottom: 2px solid #1e7ae6;
+      padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+    .cv-item {
+      margin-bottom: 1.2rem;
+    }
+    .cv-item-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #0b1c2e;
+    }
+    .cv-item-sub {
+      font-weight: 500;
+      color: #1e7ae6;
+      font-size: 0.9rem;
+      margin-bottom: 0.2rem;
+    }
+    .cv-item-desc {
+      font-size: 0.9rem;
+      color: #2e4052;
+      white-space: pre-line;
+    }
+    .cv-text-block {
+      font-size: 0.9rem;
+      color: #2e4052;
+      white-space: pre-line;
+    }
+    .placeholder-text {
+      color: #9aaebf;
+      font-style: italic;
+    }
+
+    @media (max-width: 950px) {
+      .app-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      .preview-panel {
+        position: static;
+      }
+      body {
+        padding: 1rem;
+      }
+      .form-panel {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ========== FORM PANEL ========== -->
+    <div class="form-panel">
+      <h2><i class="fas fa-file-pen"></i> CV Builder</h2>
+      <div class="subhead">Fill in the details – live preview & instant download.</div>
+
+      <!-- Personal Info -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-user"></i> Personal Information</div>
+        <div class="input-group">
+          <label><i class="fas fa-user"></i> Full name</label>
+          <input type="text" id="fullName" placeholder="Alex Morgan" value="Alex Morgan">
+        </div>
+        <div class="input-group">
+          <label><i class="fas fa-briefcase"></i> Professional title</label>
+          <input type="text" id="title" placeholder="Senior Product Designer" value="Senior Product Designer">
+        </div>
+      </div>
+
+      <!-- Contact Details -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-address-card"></i> Contact Details</div>
+        <div id="contactContainer">
+          <!-- Contact items will be added dynamically -->
+        </div>
+        <button class="add-btn" id="addContactBtn"><i class="fas fa-plus"></i> Add contact detail</button>
+      </div>
+
+      <!-- Location -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-location-dot"></i> Location</div>
+        <div class="input-group">
+          <input type="text" id="location" placeholder="San Francisco, CA" value="San Francisco, CA">
+        </div>
+      </div>
+
+      <!-- Executive Summary / Profile -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-align-left"></i> Executive Summary / Profile</div>
+        <div class="input-group">
+          <textarea id="profile" rows="3" placeholder="Experienced designer with 8+ years...">Innovative product designer with 8+ years of experience leading design teams and delivering user-centered solutions. Skilled in design systems, prototyping, and cross-functional collaboration.</textarea>
+        </div>
+      </div>
+
+      <!-- Work Experience -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-briefcase"></i> Work Experience</div>
+        <div id="experienceContainer">
+          <!-- Experience items will be added dynamically -->
+        </div>
+        <button class="add-btn" id="addExperienceBtn"><i class="fas fa-plus"></i> Add work experience</button>
+      </div>
+
+      <!-- Education -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-graduation-cap"></i> Education</div>
+        <div id="educationContainer">
+          <!-- Education items will be added dynamically -->
+        </div>
+        <button class="add-btn" id="addEducationBtn"><i class="fas fa-plus"></i> Add education</button>
+      </div>
+
+      <!-- Skills -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-code"></i> Skills</div>
+        <div class="input-group">
+          <textarea id="skills" rows="2" placeholder="Figma, UI/UX, Prototyping, HTML/CSS, Design Systems">Figma, UI/UX, Prototyping, HTML/CSS, Design Systems</textarea>
+        </div>
+      </div>
+
+      <!-- References (optional) -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-address-book"></i> References <span style="font-weight:400;text-transform:none;font-size:0.75rem;color:#a0b3c6;">(optional)</span></div>
+        <div class="input-group">
+          <textarea id="references" rows="2" placeholder="Available upon request">Available upon request</textarea>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn btn-primary" id="downloadPdfBtn"><i class="fas fa-file-pdf"></i> Download PDF</button>
+        <button class="btn btn-outline" id="downloadDocxBtn"><i class="fas fa-file-word"></i> Download DOCX</button>
+      </div>
+    </div>
+
+    <!-- ========== PREVIEW PANEL ========== -->
+    <div class="preview-panel">
+      <div class="preview-header">
+        <h3><i class="fas fa-eye"></i> Live preview</h3>
+        <span class="badge">A4 style</span>
+      </div>
+      <div id="cvPreview" class="cv-paper">
+        <!-- Dynamic CV content will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- DOM refs ----------
+      const fullNameInput = document.getElementById('fullName');
+      const titleInput = document.getElementById('title');
+      const locationInput = document.getElementById('location');
+      const profileInput = document.getElementById('profile');
+      const skillsInput = document.getElementById('skills');
+      const referencesInput = document.getElementById('references');
+      const previewDiv = document.getElementById('cvPreview');
+
+      // Containers
+      const contactContainer = document.getElementById('contactContainer');
+      const experienceContainer = document.getElementById('experienceContainer');
+      const educationContainer = document.getElementById('educationContainer');
+
+      // Buttons
+      const addContactBtn = document.getElementById('addContactBtn');
+      const addExperienceBtn = document.getElementById('addExperienceBtn');
+      const addEducationBtn = document.getElementById('addEducationBtn');
+
+      // ---------- Helpers ----------
+      function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // ---------- Dynamic Contact Items ----------
+      function createContactItem(label = '', value = '') {
+        const div = document.createElement('div');
+        div.className = 'contact-item';
+        div.innerHTML = `
+          <button class="remove-btn" title="Remove"><i class="fas fa-times-circle"></i></button>
+          <div class="row-2" style="margin-bottom:0.4rem;">
+            <div class="input-group">
+              <label><i class="fas fa-tag"></i> Type</label>
+              <input type="text" class="contact-label" placeholder="Email / Phone / LinkedIn" value="${escapeHtml(label)}">
+            </div>
+            <div class="input-group">
+              <label><i class="fas fa-info-circle"></i> Value</label>
+              <input type="text" class="contact-value" placeholder="alex@example.com" value="${escapeHtml(value)}">
+            </div>
+          </div>
+        `;
+        div.querySelector('.remove-btn').addEventListener('click', function() {
+          div.remove();
+          renderPreview();
+        });
+        // Add input listeners
+        div.querySelectorAll('input').forEach(inp => inp.addEventListener('input', renderPreview));
+        return div;
+      }
+
+      function addContactItem(label = '', value = '') {
+        contactContainer.appendChild(createContactItem(label, value));
+        renderPreview();
+      }
+
+      // Pre-populate contacts
+      addContactItem('Email', 'alex.morgan@example.com');
+      addContactItem('Phone', '+1 987 654 3210');
+      addContactItem('LinkedIn', 'linkedin.com/in/alexmorgan');
+
+      addContactBtn.addEventListener('click', () => addContactItem());
+
+      // ---------- Dynamic Experience Items ----------
+      function createExperienceItem(jobTitle = '', company = '', dates = '', description = '') {
+        const div = document.createElement('div');
+        div.className = 'exp-item';
+        div.innerHTML = `
+          <button class="remove-btn" title="Remove"><i class="fas fa-times-circle"></i></button>
+          <div class="input-group">
+            <label><i class="fas fa-user-tie"></i> Job title</label>
+            <input type="text" class="exp-title" placeholder="Senior Product Designer" value="${escapeHtml(jobTitle)}">
+          </div>
+          <div class="row-2">
+            <div class="input-group">
+              <label><i class="fas fa-building"></i> Company</label>
+              <input type="text" class="exp-company" placeholder="Figma" value="${escapeHtml(company)}">
+            </div>
+            <div class="input-group">
+              <label><i class="fas fa-calendar"></i> Start – End</label>
+              <input type="text" class="exp-dates" placeholder="2023 – Present" value="${escapeHtml(dates)}">
+            </div>
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-list-check"></i> Description / Achievements</label>
+            <textarea class="exp-desc" rows="2" placeholder="Led design system...">${escapeHtml(description)}</textarea>
+          </div>
+        `;
+        div.querySelector('.remove-btn').addEventListener('click', function() {
+          div.remove();
+          renderPreview();
+        });
+        div.querySelectorAll('input, textarea').forEach(inp => inp.addEventListener('input', renderPreview));
+        return div;
+      }
+
+      function addExperienceItem(jobTitle = '', company = '', dates = '', description = '') {
+        experienceContainer.appendChild(createExperienceItem(jobTitle, company, dates, description));
+        renderPreview();
+      }
+
+      // Pre-populate experience
+      addExperienceItem('Senior Product Designer', 'Figma', '2023 – Present', 'Led design system and mentored 4 designers.\nIncreased design consistency by 40%.');
+      addExperienceItem('Product Designer', 'Airbnb', '2020 – 2023', 'Redesigned host dashboard, increased engagement by 27%.\nCollaborated with engineering and product teams.');
+
+      addExperienceBtn.addEventListener('click', () => addExperienceItem());
+
+      // ---------- Dynamic Education Items ----------
+      function createEducationItem(school = '', years = '', degree = '') {
+        const div = document.createElement('div');
+        div.className = 'edu-item';
+        div.innerHTML = `
+          <button class="remove-btn" title="Remove"><i class="fas fa-times-circle"></i></button>
+          <div class="input-group">
+            <label><i class="fas fa-school"></i> School / Institution</label>
+            <input type="text" class="edu-school" placeholder="Stanford University" value="${escapeHtml(school)}">
+          </div>
+          <div class="row-2">
+            <div class="input-group">
+              <label><i class="fas fa-calendar"></i> Years</label>
+              <input type="text" class="edu-years" placeholder="2018 – 2022" value="${escapeHtml(years)}">
+            </div>
+            <div class="input-group">
+              <label><i class="fas fa-award"></i> Degree / Achievement</label>
+              <input type="text" class="edu-degree" placeholder="B.Sc. Computer Science" value="${escapeHtml(degree)}">
+            </div>
+          </div>
+        `;
+        div.querySelector('.remove-btn').addEventListener('click', function() {
+          div.remove();
+          renderPreview();
+        });
+        div.querySelectorAll('input').forEach(inp => inp.addEventListener('input', renderPreview));
+        return div;
+      }
+
+      function addEducationItem(school = '', years = '', degree = '') {
+        educationContainer.appendChild(createEducationItem(school, years, degree));
+        renderPreview();
+      }
+
+      // Pre-populate education
+      addEducationItem('Stanford University', '2018 – 2022', 'B.Sc. Computer Science');
+      addEducationItem('Design Academy', '2022 – 2023', 'Certificate in UX Design');
+
+      addEducationBtn.addEventListener('click', () => addEducationItem());
+
+      // ---------- Render Preview ----------
+      function renderPreview() {
+        const fullName = fullNameInput.value.trim() || 'Your Name';
+        const title = titleInput.value.trim() || 'Professional Title';
+        const location = locationInput.value.trim();
+        const profile = profileInput.value.trim();
+        const skills = skillsInput.value.trim();
+        const references = referencesInput.value.trim();
+
+        // --- Contact details ---
+        const contactItems = contactContainer.querySelectorAll('.contact-item');
+        let contactHtml = '';
+        if (contactItems.length > 0) {
+          contactHtml = '<div class="cv-contact">';
+          contactItems.forEach(item => {
+            const label = item.querySelector('.contact-label')?.value.trim() || '';
+            const value = item.querySelector('.contact-value')?.value.trim() || '';
+            if (value) {
+              const icon = label.toLowerCase().includes('email') ? 'fa-envelope' :
+                           label.toLowerCase().includes('phone') ? 'fa-phone' :
+                           label.toLowerCase().includes('linkedin') ? 'fa-linkedin' :
+                           label.toLowerCase().includes('website') ? 'fa-globe' : 'fa-link';
+              contactHtml += `<span><i class="fas ${icon}"></i> ${escapeHtml(value)}</span>`;
+            }
+          });
+          contactHtml += '</div>';
+        } else {
+          contactHtml = `<div class="cv-contact placeholder-text"><span><i class="fas fa-envelope"></i> email@example.com</span><span><i class="fas fa-phone"></i> +1 234 567 890</span><span><i class="fas fa-link"></i> linkedin.com/in/you</span></div>`;
+        }
+
+        // --- Location (if any) ---
+        let locationHtml = '';
+        if (location) {
+          locationHtml = `<div style="margin-bottom:1rem;font-size:0.95rem;color:#3f5568;"><i class="fas fa-location-dot" style="color:#1e7ae6;width:16px;"></i> ${escapeHtml(location)}</div>`;
+        }
+
+        // --- Profile / Executive Summary ---
+        let profileHtml = '';
+        if (profile) {
+          profileHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">Profile</div>
+              <div class="cv-text-block">${escapeHtml(profile).replace(/\n/g, '<br>')}</div>
+            </div>
+          `;
+        } else {
+          profileHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">Profile</div>
+              <div class="cv-text-block placeholder-text">Experienced professional with a passion for...</div>
+            </div>
+          `;
+        }
+
+        // --- Work Experience ---
+        const expItems = experienceContainer.querySelectorAll('.exp-item');
+        let experienceHtml = '';
+        if (expItems.length > 0) {
+          experienceHtml = `<div class="cv-section"><div class="cv-section-title">Work Experience</div>`;
+          expItems.forEach(item => {
+            const jobTitle = item.querySelector('.exp-title')?.value.trim() || '';
+            const company = item.querySelector('.exp-company')?.value.trim() || '';
+            const dates = item.querySelector('.exp-dates')?.value.trim() || '';
+            const desc = item.querySelector('.exp-desc')?.value.trim() || '';
+            if (jobTitle || company || dates || desc) {
+              experienceHtml += `
+                <div class="cv-item">
+                  <div class="cv-item-title">${escapeHtml(jobTitle)}</div>
+                  <div class="cv-item-sub">${escapeHtml(company)}${company && dates ? ' · ' : ''}${escapeHtml(dates)}</div>
+                  ${desc ? `<div class="cv-item-desc">${escapeHtml(desc).replace(/\n/g, '<br>')}</div>` : ''}
+                </div>
+              `;
+            }
+          });
+          experienceHtml += `</div>`;
+        } else {
+          experienceHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">Work Experience</div>
+              <div class="cv-item placeholder-text">Job title, company, achievements</div>
+            </div>
+          `;
+        }
+
+        // --- Education ---
+        const eduItems = educationContainer.querySelectorAll('.edu-item');
+        let educationHtml = '';
+        if (eduItems.length > 0) {
+          educationHtml = `<div class="cv-section"><div class="cv-section-title">Education</div>`;
+          eduItems.forEach(item => {
+            const school = item.querySelector('.edu-school')?.value.trim() || '';
+            const years = item.querySelector('.edu-years')?.value.trim() || '';
+            const degree = item.querySelector('.edu-degree')?.value.trim() || '';
+            if (school || years || degree) {
+              educationHtml += `
+                <div class="cv-item">
+                  <div class="cv-item-title">${escapeHtml(school)}</div>
+                  <div class="cv-item-sub">${escapeHtml(years)}${years && degree ? ' · ' : ''}${escapeHtml(degree)}</div>
+                </div>
+              `;
+            }
+          });
+          educationHtml += `</div>`;
+        } else {
+          educationHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">Education</div>
+              <div class="cv-item placeholder-text">School, years, degree</div>
+            </div>
+          `;
+        }
+
+        // --- Skills ---
+        let skillsHtml = '';
+        if (skills) {
+          skillsHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">Skills</div>
+              <div class="cv-text-block">${escapeHtml(skills).replace(/\n/g, '<br>')}</div>
+            </div>
+          `;
+        } else {
+          skillsHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">Skills</div>
+              <div class="cv-text-block placeholder-text">Figma, JavaScript, Project management ...</div>
+            </div>
+          `;
+        }
+
+        // --- References (optional) ---
+        let referencesHtml = '';
+        if (references) {
+          referencesHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">References</div>
+              <div class="cv-text-block">${escapeHtml(references).replace(/\n/g, '<br>')}</div>
+            </div>
+          `;
+        } else {
+          referencesHtml = `
+            <div class="cv-section">
+              <div class="cv-section-title">References</div>
+              <div class="cv-text-block placeholder-text">Available upon request</div>
+            </div>
+          `;
+        }
+
+        // Compose full preview
+        previewDiv.innerHTML = `
+          <div class="cv-name">${escapeHtml(fullName)}</div>
+          <div class="cv-title">${escapeHtml(title)}</div>
+          ${contactHtml}
+          ${locationHtml}
+          ${profileHtml}
+          ${experienceHtml}
+          ${educationHtml}
+          ${skillsHtml}
+          ${referencesHtml}
+        `;
+      }
+
+      // ---------- Attach listeners to static inputs ----------
+      [fullNameInput, titleInput, locationInput, profileInput, skillsInput, referencesInput].forEach(inp => {
+        inp.addEventListener('input', renderPreview);
+      });
+
+      // Initial render
+      renderPreview();
+
+      // ---------- DOWNLOAD PDF ----------
+      document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+        const element = previewDiv.cloneNode(true);
+        const wrapper = document.createElement('div');
+        wrapper.style.width = '100%';
+        wrapper.style.maxWidth = '800px';
+        wrapper.style.margin = '0 auto';
+        wrapper.style.background = 'white';
+        wrapper.style.padding = '2rem';
+        wrapper.style.boxSizing = 'border-box';
+        wrapper.appendChild(element);
+
+        const fullName = fullNameInput.value.trim() || 'cv';
+        const opt = {
+          margin: [0.5, 0.5, 0.5, 0.5],
+          filename: `${fullName.replace(/\s+/g, '_')}_CV.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, letterRendering: true, useCORS: true, logging: false },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(wrapper).save();
+      });
+
+      // ---------- DOWNLOAD DOCX ----------
+      document.getElementById('downloadDocxBtn').addEventListener('click', async function() {
+        const fullName = fullNameInput.value.trim() || 'Your Name';
+        const title = titleInput.value.trim() || 'Professional Title';
+        const location = locationInput.value.trim();
+        const profile = profileInput.value.trim();
+        const skills = skillsInput.value.trim();
+        const references = referencesInput.value.trim();
+
+        // Contact items
+        const contactItems = contactContainer.querySelectorAll('.contact-item');
+        const contactStrings = [];
+        contactItems.forEach(item => {
+          const label = item.querySelector('.contact-label')?.value.trim() || '';
+          const value = item.querySelector('.contact-value')?.value.trim() || '';
+          if (value) contactStrings.push(`${label}: ${value}`);
+        });
+
+        // Experience items
+        const expItems = experienceContainer.querySelectorAll('.exp-item');
+        const expData = [];
+        expItems.forEach(item => {
+          const jobTitle = item.querySelector('.exp-title')?.value.trim() || '';
+          const company = item.querySelector('.exp-company')?.value.trim() || '';
+          const dates = item.querySelector('.exp-dates')?.value.trim() || '';
+          const desc = item.querySelector('.exp-desc')?.value.trim() || '';
+          if (jobTitle || company || dates || desc) {
+            expData.push({ jobTitle, company, dates, desc });
+          }
+        });
+
+        // Education items
+        const eduItems = educationContainer.querySelectorAll('.edu-item');
+        const eduData = [];
+        eduItems.forEach(item => {
+          const school = item.querySelector('.edu-school')?.value.trim() || '';
+          const years = item.querySelector('.edu-years')?.value.trim() || '';
+          const degree = item.querySelector('.edu-degree')?.value.trim() || '';
+          if (school || years || degree) {
+            eduData.push({ school, years, degree });
+          }
+        });
+
+        // Build document
+        const doc = new docx.Document({
+          sections: [{
+            properties: {},
+            children: []
+          }]
+        });
+        const children = doc.sections[0].children;
+
+        const addParagraph = (text, options = {}) => {
+          if (text === undefined || text === null) return;
+          children.push(new docx.Paragraph({
+            children: [new docx.TextRun({ text: text, ...options })],
+            spacing: { after: 120, ...(options.spacing || {}) },
+            ...options,
+          }));
+        };
+
+        // Name
+        addParagraph(fullName, { bold: true, size: 36, font: 'Arial', color: '0B1C2E' });
+        addParagraph(title, { size: 28, font: 'Arial', color: '1E7AE6', spacing: { after: 200 } });
+
+        // Contacts
+        if (contactStrings.length) {
+          contactStrings.forEach(line => {
+            addParagraph(line, { size: 22, color: '3F5568', spacing: { after: 60 } });
+          });
+        }
+        if (location) addParagraph(`Location: ${location}`, { size: 22, color: '3F5568', spacing: { after: 120 } });
+
+        // Profile
+        if (profile) {
+          addParagraph('PROFILE', { bold: true, size: 28, color: '0B1C2E', spacing: { before: 200, after: 100 } });
+          profile.split('\n').forEach(line => {
+            if (line.trim()) addParagraph(line, { size: 24, color: '2E4052' });
+          });
+        }
+
+        // Work Experience
+        if (expData.length) {
+          addParagraph('WORK EXPERIENCE', { bold: true, size: 28, color: '0B1C2E', spacing: { before: 200, after: 100 } });
+          expData.forEach(exp => {
+            addParagraph(exp.jobTitle, { bold: true, size: 26, color: '0B1C2E', spacing: { after: 20 } });
+            const sub = [exp.company, exp.dates].filter(Boolean).join(' · ');
+            if (sub) addParagraph(sub, { size: 22, color: '1E7AE6', spacing: { after: 40 } });
+            if (exp.desc) {
+              exp.desc.split('\n').forEach(line => {
+                if (line.trim()) addParagraph(line, { size: 22, color: '2E4052', spacing: { after: 40 } });
+              });
+            }
+            // Add a small gap
+            addParagraph('', { size: 10, spacing: { after: 80 } });
+          });
+        }
+
+        // Education
+        if (eduData.length) {
+          addParagraph('EDUCATION', { bold: true, size: 28, color: '0B1C2E', spacing: { before: 200, after: 100 } });
+          eduData.forEach(edu => {
+            addParagraph(edu.school, { bold: true, size: 26, color: '0B1C2E', spacing: { after: 20 } });
+            const sub = [edu.years, edu.degree].filter(Boolean).join(' · ');
+            if (sub) addParagraph(sub, { size: 22, color: '1E7AE6', spacing: { after: 60 } });
+          });
+        }
+
+        // Skills
+        if (skills) {
+          addParagraph('SKILLS', { bold: true, size: 28, color: '0B1C2E', spacing: { before: 200, after: 100 } });
+          skills.split('\n').forEach(line => {
+            if (line.trim()) addParagraph(line, { size: 24, color: '2E4052' });
+          });
+        }
+
+        // References
+        if (references) {
+          addParagraph('REFERENCES', { bold: true, size: 28, color: '0B1C2E', spacing: { before: 200, after: 100 } });
+          references.split('\n').forEach(line => {
+            if (line.trim()) addParagraph(line, { size: 24, color: '2E4052' });
+          });
+        }
+
+        // Generate blob and download
+        try {
+          const blob = await docx.Packer.toBlob(doc);
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${fullName.replace(/\s+/g, '_')}_CV.docx`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('DOCX error:', error);
+          alert('Failed to generate DOCX. Please try again.');
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>
